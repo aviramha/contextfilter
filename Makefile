@@ -76,3 +76,7 @@ lint-check: lint-check-black lint-check-flake8 lint-check-isort lint-check-mypy
 .PHONY: test
 test:
 	@$(POETRY) run pytest --cov-report term --cov-report html --cov=contextfilter -vv
+
+.PHONY: publish
+publish:
+	@$(POETRY) publish --username=$(PYPI_USERNAME) --password=$(PYPI_PASSWORD) --build
