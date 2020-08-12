@@ -2,6 +2,7 @@
 ![Version](https://img.shields.io/pypi/v/contextfilter)
 ![License](https://img.shields.io/pypi/l/contextfilter)
 ![Tests](https://github.com/aviramha/contextfilter/workflows/Test%20Contextfilter/badge.svg?branch=develop)
+
 Small, helper library for logging contextual information in Python 3.7.
 
 ## Installation
