@@ -19,10 +19,9 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
-    - name: Install Poetry
+    - name: Install PIP
       run: |
         python -m pip install --upgrade pip
-        pip install poetry
     - name: Setup Cache
       uses: actions/cache@v2
       with:
@@ -35,4 +34,5 @@ jobs:
         PYPI_USERNAME: ${{ secrets.pypi_user }}
         PYPI_PASSWORD: ${{ secrets.pypi_password }}
       run: |
+        make install
         make publish
