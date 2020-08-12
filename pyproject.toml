@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "contextfilter"
-version = "0.1.0"
+version = "0.1.1"
 description = "ContextVars Filter for easily enriching log records"
 authors = ["Aviram Hassan <aviramyhassan@gmail.com>"]
 license = "MIT"
