@@ -8,7 +8,7 @@ $ pip install contextfilter
 ```
 
 ## Usage
-```
+```py
 import logging
 from contextfilter import ContextFilter, set_entry
 
