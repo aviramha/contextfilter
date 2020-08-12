@@ -56,6 +56,18 @@ def set_entry(name: Hashable, value: Any) -> None:
     extra_dict[name] = value
 
 
+def set_entries(**entries: Any) -> None:
+    """
+    Sets multiple entries at once.
+    Args:
+        **entries - key, value
+    Raises:
+        ValueError - if any of the entries is in PROTECTED_KEYS.
+    """
+    for key, value in entries.items():
+        set_entry(key, value)
+
+
 def reset() -> Dict[Any, Any]:
     """
     Resets the ContextFilter's context dictioniary.
