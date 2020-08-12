@@ -1,5 +1,7 @@
 # contextfilter
-
+![Version](https://img.shields.io/pypi/v/contextfilter)
+![License](https://img.shields.io/pypi/l/contextfilter)
+![Tests](https://github.com/aviramha/contextfilter/workflows/Test%20Contextfilter/badge.svg?branch=develop)
 Small, helper library for logging contextual information in Python 3.7.
 
 ## Installation
@@ -11,11 +13,13 @@ $ pip install contextfilter
 ## Usage
 ```py
 import logging
-from contextfilter import ContextFilter, set_entry
+from contextfilter import ContextFilter, set_entry, set_entries
 
 logger = logging.getLogger("test")
 logger.addFilter(ContextFilter())
 set_entry("request_id", 3)
+# or
+set_entries(request_id=3)
 logger.info("test")
 # Log record will contain the attribute request_id with value 3
 ```

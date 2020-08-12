@@ -1,7 +1,7 @@
 import logging
 import unittest
 
-from contextfilter import ContextFilter, reset, set_entry
+from contextfilter import ContextFilter, reset, set_entries, set_entry
 
 
 class TestSanity(unittest.TestCase):
@@ -10,7 +10,7 @@ class TestSanity(unittest.TestCase):
         logger.addFilter(ContextFilter())
         with self.assertLogs(logger, level="INFO") as output:
             logger.info("test1")
-            set_entry("test_attr", "test_data")
+            set_entries(test_attr="test_data")
             logger.info("test2")
             reset()
             logger.info("test3")
