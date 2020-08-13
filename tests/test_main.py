@@ -25,6 +25,23 @@ class TestSanity(unittest.TestCase):
         with self.assertRaises(ValueError):
             cfilter.set_entry("msecs", 1)
 
+    def test_multi_filters(self):
+        logger1 = logging.getLogger("test")
+        logger2 = logging.getLogger("test2")
+        cfilter1 = ContextFilter()
+        cfilter2 = ContextFilter()
+        logger1.addFilter(cfilter1)
+        logger2.addFilter(cfilter2)
+        cfilter1.set_entries(a=1)
+        cfilter2.set_entries(a=2)
+        with self.assertLogs(logger1, level="INFO") as output:
+            logger1.info("test")
+        self.assertEqual(output.records[0].a, 1)
+
+        with self.assertLogs(logger2, level="INFO") as output:
+            logger2.info("test")
+        self.assertEqual(output.records[0].a, 2)
+
 
 if __name__ == "__main__":
     unittest.main()

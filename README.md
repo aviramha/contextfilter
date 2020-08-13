@@ -17,10 +17,11 @@ import logging
 from contextfilter import ContextFilter, set_entry, set_entries
 
 logger = logging.getLogger("test")
-logger.addFilter(ContextFilter())
-set_entry("request_id", 3)
+cf = ContextFilter()
+logger.addFilter(cf)
+cf.set_entry("request_id", 3)
 # or
-set_entries(request_id=3)
+cf.set_entries(request_id=3)
 logger.info("test")
 # Log record will contain the attribute request_id with value 3
 ```
