@@ -1,3 +1,3 @@
-from .main import ContextFilter, reset, set_entries, set_entry
+from .main import ContextFilter
 
-__all__ = ("ContextFilter", "set_entry", "reset", "set_entries")
+__all__ = ("ContextFilter",)

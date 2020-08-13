@@ -1,6 +1,6 @@
 import logging
 from contextvars import ContextVar
-from typing import Any, Dict, Hashable
+from typing import Any, Dict
 
 _PROTECTED_KEYS = frozenset(
     (
@@ -33,50 +33,9 @@ _PROTECTED_KEYS = frozenset(
     )
 )
 
-_extra: ContextVar[Dict[Any, Any]] = ContextVar("extra")
+_data: ContextVar[Dict[Any, Any]] = ContextVar("extra")
 
 _sentinel = object()
-
-
-def set_entry(name: Hashable, value: Any) -> None:
-    """
-    Sets an entry in the ContextFilter's context dictionary.
-    Args:
-        name: Key for the value.
-        value: Value to set.
-    Raises:
-        ValueError - if name is in PROTECTED_KEYS.
-    """
-    if name in _PROTECTED_KEYS:
-        raise ValueError("{name} is a protected LogRecord attribute.")
-    try:
-        extra_dict = _extra.get()
-    except LookupError:
-        extra_dict = reset()
-    extra_dict[name] = value
-
-
-def set_entries(**entries: Any) -> None:
-    """
-    Sets multiple entries at once.
-    Args:
-        **entries - key, value
-    Raises:
-        ValueError - if any of the entries is in PROTECTED_KEYS.
-    """
-    for key, value in entries.items():
-        set_entry(key, value)
-
-
-def reset() -> Dict[Any, Any]:
-    """
-    Resets the ContextFilter's context dictioniary.
-    Returns:
-        The new initialized dictioniary.
-    """
-    new_dict: Dict[Any, Any] = dict()
-    _extra.set(new_dict)
-    return new_dict
 
 
 class ContextFilter(logging.Filter):
@@ -85,12 +44,52 @@ class ContextFilter(logging.Filter):
     LogRecord processed.
     """
 
+    def set_entry(self, name: str, value: Any) -> None:
+        """
+        Sets an entry in the ContextFilter's context dictionary.
+        Args:
+            name: Key for the value.
+            value: Value to set.
+        Raises:
+            ValueError - if name is in PROTECTED_KEYS.
+        """
+        if name in _PROTECTED_KEYS:
+            raise ValueError("{name} is a protected LogRecord attribute.")
+        try:
+            data = _data.get()[self]
+        except (LookupError, KeyError):
+            self.reset()
+            data = _data.get()[self]
+        data[name] = value
+
+    def set_entries(self, **entries: Any) -> None:
+        """
+        Sets multiple entries at once.
+        Args:
+            **entries - key, value
+        Raises:
+            ValueError - if any of the entries is in PROTECTED_KEYS.
+        """
+        for key, value in entries.items():
+            self.set_entry(key, value)
+
+    def reset(self) -> None:
+        """
+        Resets the ContextFilter's context dictioniary.
+        """
+        try:
+            data = _data.get()
+        except LookupError:
+            data = dict()
+            _data.set(data)
+        data[self] = {}
+
     def filter(self, record: logging.LogRecord) -> bool:
         try:
-            extra_params = _extra.get()
-        except LookupError:
+            data = _data.get()[self]
+        except (LookupError, KeyError):
             return True
-        for key, value in extra_params.items():
+        for key, value in data.items():
             original_value = getattr(record, key, _sentinel)
             if original_value is _sentinel:
                 setattr(record, key, value)
