@@ -2,7 +2,7 @@ import logging
 import unittest
 from contextvars import ContextVar
 
-from contextfilter import ConstContextFilter, ContextFilter
+from contextfilter import ConstContextFilter, ContextVarFilter
 
 first_one: ContextVar[str] = ContextVar("first_one")
 second_one: ContextVar[str] = ContextVar("second_one")
@@ -11,7 +11,7 @@ second_one: ContextVar[str] = ContextVar("second_one")
 class TestContextVarSanity(unittest.TestCase):
     def test_sanity(self):
         logger = logging.getLogger("test")
-        cfilter = ContextFilter(test_1=first_one, test_2=second_one)
+        cfilter = ContextVarFilter(test_1=first_one, test_2=second_one)
         logger.addFilter(cfilter)
         with self.assertLogs(logger, level="INFO") as output:
             logger.info("test1")
@@ -26,11 +26,11 @@ class TestContextVarSanity(unittest.TestCase):
 
     def test_protected_attribute(self):
         with self.assertRaises(ValueError):
-            ContextFilter(extra=first_one)
+            ContextVarFilter(extra=first_one)
 
     def test_record_attribute_exists(self):
         logger = logging.getLogger("test2")
-        cfilter = ContextFilter(lentils=first_one)
+        cfilter = ContextVarFilter(lentils=first_one)
         logger.addFilter(cfilter)
         first_one.set("hi")
         with self.assertLogs(logger, level="INFO") as output:
