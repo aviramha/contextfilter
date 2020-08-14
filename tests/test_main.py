@@ -1,46 +1,64 @@
 import logging
 import unittest
+from contextvars import ContextVar
 
-from contextfilter import ContextFilter
+from contextfilter import ConstContextFilter, ContextFilter
+
+first_one: ContextVar[str] = ContextVar("first_one")
+second_one: ContextVar[str] = ContextVar("second_one")
 
 
-class TestSanity(unittest.TestCase):
+class TestContextVarSanity(unittest.TestCase):
     def test_sanity(self):
         logger = logging.getLogger("test")
-        cfilter = ContextFilter()
+        cfilter = ContextFilter(test_1=first_one, test_2=second_one)
         logger.addFilter(cfilter)
         with self.assertLogs(logger, level="INFO") as output:
             logger.info("test1")
-            cfilter.set_entries(test_attr="test_data")
+            first_one.set("test_data")
             logger.info("test2")
-            cfilter.reset()
+            second_one.set("test_data2")
             logger.info("test3")
 
-        self.assertIsNone(getattr(output.records[0], "test_attr", None))
-        self.assertEqual(output.records[1].test_attr, "test_data")
-        self.assertIsNone(getattr(output.records[2], "test_attr", None))
+        self.assertFalse(hasattr(output.records[0], "test_attr"))
+        self.assertEqual(output.records[1].test_1, "test_data")
+        self.assertEqual(output.records[2].test_2, "test_data2")
 
     def test_protected_attribute(self):
-        cfilter = ContextFilter()
         with self.assertRaises(ValueError):
-            cfilter.set_entry("msecs", 1)
+            ContextFilter(extra=first_one)
 
-    def test_multi_filters(self):
-        logger1 = logging.getLogger("test")
-        logger2 = logging.getLogger("test2")
-        cfilter1 = ContextFilter()
-        cfilter2 = ContextFilter()
-        logger1.addFilter(cfilter1)
-        logger2.addFilter(cfilter2)
-        cfilter1.set_entries(a=1)
-        cfilter2.set_entries(a=2)
-        with self.assertLogs(logger1, level="INFO") as output:
-            logger1.info("test")
-        self.assertEqual(output.records[0].a, 1)
+    def test_record_attribute_exists(self):
+        logger = logging.getLogger("test2")
+        cfilter = ContextFilter(lentils=first_one)
+        logger.addFilter(cfilter)
+        first_one.set("hi")
+        with self.assertLogs(logger, level="INFO") as output:
+            logger.info("test1", extra={"lentils": "test"})
+        self.assertEqual(output.records[0].lentils, "test")
 
-        with self.assertLogs(logger2, level="INFO") as output:
-            logger2.info("test")
-        self.assertEqual(output.records[0].a, 2)
+
+class TestConstFilter(unittest.TestCase):
+    def test_sanity(self):
+        logger = logging.getLogger("test")
+        cfilter = ConstContextFilter(test_1="test_data", test_2="test_data2")
+        logger.addFilter(cfilter)
+        with self.assertLogs(logger, level="INFO") as output:
+            logger.info("test1")
+        self.assertEqual(output.records[0].test_1, "test_data")
+        self.assertEqual(output.records[0].test_2, "test_data2")
+
+    def test_protected_attribute(self):
+        with self.assertRaises(ValueError):
+            ConstContextFilter(extra="d")
+
+    def test_record_attribute_exists(self):
+        logger = logging.getLogger("test2")
+        cfilter = ConstContextFilter(lentils="nooveride")
+        logger.addFilter(cfilter)
+        with self.assertLogs(logger, level="INFO") as output:
+            logger.info("test1", extra={"lentils": "test"})
+        self.assertEqual(output.records[0].lentils, "test")
 
 
 if __name__ == "__main__":

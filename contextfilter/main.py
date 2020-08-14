@@ -1,6 +1,6 @@
 import logging
 from contextvars import ContextVar
-from typing import Any, Dict
+from typing import Any
 
 _PROTECTED_KEYS = frozenset(
     (
@@ -33,64 +33,68 @@ _PROTECTED_KEYS = frozenset(
     )
 )
 
-_data: ContextVar[Dict[Any, Any]] = ContextVar("extra")
 
-_sentinel = object()
-
-
-class ContextFilter(logging.Filter):
+class ContextVarFilter(logging.Filter):
     """
-    ContextFilter uses an internal context dictioniary to enrich each
+    ContextVarFilter adds given context variables as attributes to each
     LogRecord processed.
     """
 
-    def set_entry(self, name: str, value: Any) -> None:
+    def __init__(self, *args, **kwargs: ContextVar[Any]) -> None:
         """
-        Sets an entry in the ContextFilter's context dictionary.
+        Initializes ContextFilter, validates that all keys are not reserved.
         Args:
-            name: Key for the value.
-            value: Value to set.
-        Raises:
-            ValueError - if name is in PROTECTED_KEYS.
+            **kwargs - Context variables to set on each LogRecord
         """
-        if name in _PROTECTED_KEYS:
-            raise ValueError("{name} is a protected LogRecord attribute.")
-        try:
-            data = _data.get()[self]
-        except (LookupError, KeyError):
-            self.reset()
-            data = _data.get()[self]
-        data[name] = value
-
-    def set_entries(self, **entries: Any) -> None:
-        """
-        Sets multiple entries at once.
-        Args:
-            **entries - key, value
-        Raises:
-            ValueError - if any of the entries is in PROTECTED_KEYS.
-        """
-        for key, value in entries.items():
-            self.set_entry(key, value)
-
-    def reset(self) -> None:
-        """
-        Resets the ContextFilter's context dictioniary.
-        """
-        try:
-            data = _data.get()
-        except LookupError:
-            data = dict()
-            _data.set(data)
-        data[self] = {}
+        super().__init__(*args)
+        for key in kwargs:
+            if key in _PROTECTED_KEYS:
+                raise ValueError(f"{key} is a protected LogRecord attribute")
+        self._context_vars = kwargs
 
     def filter(self, record: logging.LogRecord) -> bool:
-        try:
-            data = _data.get()[self]
-        except (LookupError, KeyError):
-            return True
-        for key, value in data.items():
-            original_value = getattr(record, key, _sentinel)
-            if original_value is _sentinel:
+        """
+        Enriches the record with the context vars only if the attribute
+        isn't set.
+        """
+        for key, value in self._context_vars.items():
+            if hasattr(record, key):
+                continue
+            try:
+                setattr(record, key, value.get())
+            except LookupError:
+                continue
+        return True
+
+
+class ConstContextFilter(logging.Filter):
+    """
+    ConstContextFilter adds constant variables as attributes to each LogRecord
+    processed.
+    """
+
+    def __init__(self, *args, **kwargs: Any) -> None:
+        """
+        Initializes ContextFilter, validates that all keys are not reserved.
+        Args:
+            **kwargs - Attributes to set on LogRecords
+        """
+        super().__init__(*args)
+        for key in kwargs:
+            if key in _PROTECTED_KEYS:
+                raise ValueError(f"{key} is a protected LogRecord attribute")
+        self._variables = kwargs
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        Enriches the record with the variables only if the attribute
+        isn't set.
+        """
+        for key, value in self._variables.items():
+            if hasattr(record, key):
+                continue
+            try:
                 setattr(record, key, value)
+            except LookupError:
+                continue
         return True

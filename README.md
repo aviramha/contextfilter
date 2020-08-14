@@ -14,14 +14,12 @@ $ pip install contextfilter
 ## Usage
 ```py
 import logging
-from contextfilter import ContextFilter, set_entry, set_entries
+from contextvars import ContextVar
+from contextfilter import ContextVarFilter, ConstContextFilter
 
+request_id: ContextVar[int] = ContextVar('request_id')
 logger = logging.getLogger("test")
-cf = ContextFilter()
-logger.addFilter(cf)
-cf.set_entry("request_id", 3)
-# or
-cf.set_entries(request_id=3)
+cf = ContextFilter(request_id=request_id)
 logger.info("test")
 # Log record will contain the attribute request_id with value 3
 ```
