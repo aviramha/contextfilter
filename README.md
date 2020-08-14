@@ -20,8 +20,16 @@ from contextfilter import ContextVarFilter, ConstContextFilter
 request_id: ContextVar[int] = ContextVar('request_id')
 logger = logging.getLogger("test")
 cf = ContextFilter(request_id=request_id)
+request_id.set(3)
+logger.addFilter(cf)
 logger.info("test")
 # Log record will contain the attribute request_id with value 3
+
+cf = ConstContextFilter(some_const=1)
+logger.addFilter(cf)
+logger.info("test")
+# Log record will contain the attribute some_const with value 1.
+
 ```
 
 ## Contributing
@@ -51,6 +59,7 @@ $ make lint-black
 
 # Latest changes
 
-## 0.3.0 (2020-8-13)
-- You can now use multiple `ContextFilter`s in same runtime. All functions moved to be under the `ContextFilter`'s instance.
-- `reset` returns nothing now
+## 0.3.0 (2020-8-14)
+- Renamed `ContextFilter` to `ContextVarFilter` - Revamped the API - It now accepts ContextVars created by caller. Suggestion for design by @bentheiii
+- Added `ConstContextFilter` which adds constant attributes to the log record.
+- Fixed #5
